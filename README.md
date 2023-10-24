@@ -1,6 +1,6 @@
 # DllMain的相关特性
 
-首先列出《DllMain中不当操作导致死锁问题的分析--进程对DllMain函数的调用规律的研究和分析》(https://blog.csdn.net/breaksoftware/article/details/8142339)中论证的11个特性：
+首先列出[《DllMain中不当操作导致死锁问题的分析--进程对DllMain函数的调用规律的研究和分析》](https://blog.csdn.net/breaksoftware/article/details/8142339)中论证的11个特性：
 
 - Dll的加载不会导致之前创建的线程调用其DllMain函数。
 - 线程创建后会调用已经加载了的DLL的DllMain，且调用原因是DLL_THREAD_ATTACH。(DisableThreadLibraryCalls会导致该过程不被调用)
