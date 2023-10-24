@@ -45,12 +45,16 @@ I 使用ExitThread
        理由同F。
 
 J 寄希望于DisableThreadLibraryCalls解决死锁问题
+        
         由《DllMain中不当操作导致死锁问题的分析--DisableThreadLibraryCalls对DllMain中死锁的影响》可知。DisableThreadLibraryCalls的实现逻辑是：找到PEB结构中用于保存加载器信息的结构体对象Ldr。
 ![image](https://github.com/f304646673/dll_best_prac/assets/5725174/384f88be-914e-4bf0-9a29-00202cc2676b)
+        
         Ldr对象的InMemoryOrderModuleList用户保存已经加载的DLL的链表。
 ![image](https://github.com/f304646673/dll_best_prac/assets/5725174/8443a5bd-0a1b-4540-a804-fd4346a79b40)
+       
        它遍历这个链表，找到调用DisableThreadLibraryCalls的DLL的信息，将该信息中的Flags字段设置或上0x40000。
 ![image](https://github.com/f304646673/dll_best_prac/assets/5725174/7f77182b-7c6e-446c-9453-78a78074d4c9)
+        
         而创建线程在底层将调用LdrpInitializeThread(详见《DllMain中不当操作导致死锁问题的分析--DisableThreadLibraryCalls对DllMain中死锁的影响》)。该函数一开始便进入了PEB中LoaderLock临界区，在该临界区中根据PEB中LDR的InMemoryOrderModuleList遍历加载的DLL，然后判断该DLL信息的Flags字段是否或上了0x40000。如果或上了，就不调用DllMain。如果没或上，就调用DllMain。这说明DisableThreadLibraryCalls对创建线程时是否进入临界区无关。
         在退出线程时底层将调用LdrShutdownThread（详见《DllMain中不当操作导致死锁问题的分析--线程退出时产生了死锁》）。该函数逻辑和LdrpInitializeThread相似，只是在调用DllMain时传的是DLL_THREAD_DETACH。所以DisableThreadLibraryCalls对LdrShutdownThread是否进入临界区也是没有影响的。
         最后附上实验中的例子和《Best Practices for Creating DLLs》
